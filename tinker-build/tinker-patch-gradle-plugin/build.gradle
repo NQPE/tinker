@@ -17,6 +17,8 @@ repositories {
     mavenCentral()
 }
 
+
+
 sourceSets {
     main {
         groovy {
@@ -32,3 +34,13 @@ sourceSets {
 apply from: rootProject.file('gradle/java-artifacts.gradle')
 apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
 
+//group='com.tencent.tinker'
+//version='1.7.7'
+//
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: uri('../repo'))
+//        }
+//    }
+//}

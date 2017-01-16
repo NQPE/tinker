@@ -3,23 +3,26 @@ apply plugin: 'com.android.application'
 
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile "com.android.support:appcompat-v7:23.1.1"
-    compile("com.tencent.tinker:tinker-android-lib:${TINKER_VERSION}") { changing = true }
-    provided("com.tencent.tinker:tinker-android-anno:${TINKER_VERSION}") { changing = true }
-
-    compile "com.android.support:multidex:1.0.1"
-
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    //    compile("com.tencent.tinker:tinker-android-lib:${TINKER_VERSION}") { changing = true }
+    //    provided("com.tencent.tinker:tinker-android-anno:${TINKER_VERSION}") { changing = true }
+    compile 'com.android.support:multidex:1.0.1'
     //use to test multiDex
-//    compile group: 'com.google.guava', name: 'guava', version: '19.0'
-//    compile "org.scala-lang:scala-library:2.11.7"
-
+    //    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    //    compile "org.scala-lang:scala-library:2.11.7"
     //use for local maven test
-//    compile("com.tencent.tinker:tinker-android-loader:${TINKER_VERSION}") { changing = true }
-//    compile("com.tencent.tinker:aosp-dexutils:${TINKER_VERSION}") { changing = true }
-//    compile("com.tencent.tinker:bsdiff-util:${TINKER_VERSION}") { changing = true }
-//    compile("com.tencent.tinker:tinker-commons:${TINKER_VERSION}") { changing = true }
+    //    compile("com.tencent.tinker:tinker-android-loader:${TINKER_VERSION}") { changing = true }
+    //    compile("com.tencent.tinker:aosp-dexutils:${TINKER_VERSION}") { changing = true }
+    //    compile("com.tencent.tinker:bsdiff-util:${TINKER_VERSION}") { changing = true }
+    //    compile("com.tencent.tinker:tinker-commons:${TINKER_VERSION}") { changing = true }
+    provided project(':tinker-android:tinker-android-anno')
+    compile project(':third-party:aosp-dexutils')
+    compile project(':third-party:bsdiff-util')
+    compile project(':tinker-android:tinker-android-lib')
+    compile project(':tinker-android:tinker-android-loader')
+    compile project(':tinker-commons')
 
 }
 
@@ -51,24 +54,32 @@ android {
     }
 
     signingConfigs {
-        release {
-            try {
-                storeFile file("./keystore/release.keystore")
-                storePassword "testres"
-                keyAlias "testres"
-                keyPassword "testres"
-            } catch (ex) {
-                throw new InvalidUserDataException(ex.toString())
-            }
-        }
-
-        debug {
-            storeFile file("./keystore/debug.keystore")
+        config {
+            storeFile file("./keystore/sign.jks")
+            storePassword "123456"
+            keyAlias "tinker"
+            keyPassword "123456"
         }
     }
+//    signingConfigs {
+//        release {
+//            try {
+//                storeFile file("./keystore/sign.jks")
+//                storePassword "123456"
+//                keyAlias "tinker"
+//                keyPassword "123456"
+//            } catch (ex) {
+//                throw new InvalidUserDataException(ex.toString())
+//            }
+//        }
+//
+//        debug {
+//            storeFile file("./keystore/sign.jks")
+//        }
+//    }
 
     defaultConfig {
-        applicationId "tinker.sample.android"
+        applicationId "com.tinker.tinker_souce_android"
         minSdkVersion 10
         targetSdkVersion 22
         versionCode 1
@@ -106,16 +117,26 @@ android {
 //        }
 //    }
 
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            signingConfig signingConfigs.release
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//        }
+//        debug {
+//            debuggable true
+//            minifyEnabled false
+//            signingConfig signingConfigs.debug
+//        }
+//    }
     buildTypes {
         release {
-            minifyEnabled true
-            signingConfig signingConfigs.release
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
         debug {
-            debuggable true
-            minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.config
         }
     }
     sourceSets {
@@ -138,9 +159,9 @@ ext {
 
     //for normal build
     //old apk file to build patch apk
-    tinkerOldApkPath = "${bakPath}/app-debug-0116-11-03-11.apk"
+    tinkerOldApkPath = "${bakPath}/tinker_souce_android-debug-0116-17-36-53.apk"
     //resource R.txt to build patch apk, must input if there is resource changed
-    tinkerApplyResourcePath = "${bakPath}/app-debug-0116-11-03-11-R.txt"
+    tinkerApplyResourcePath = "${bakPath}/tinker_souce_android-debug-0116-17-36-53-R.txt"
 
     //proguard mapping file to build patch apk
     tinkerApplyMappingPath = "${bakPath}/app-debug-1018-17-32-47-mapping.txt"
@@ -173,6 +194,16 @@ def getTinkerBuildFlavorDirectory() {
     return ext.tinkerBuildFlavorDirectory
 }
 
+//buildscript {
+//    repositories {
+//        maven {
+//            url uri('../tinker-build/repo')
+//        }
+//    }
+//    dependencies {
+//        classpath 'com.tencent.tinker:tinker-patch-gradle-plugin:1.7.7'
+//    }
+//}
 if (buildWithTinker()) {
     apply plugin: 'com.tencent.tinker.patch'
 
@@ -275,8 +306,8 @@ if (buildWithTinker()) {
              *
              */
             loader = [
-                      //use sample, let BaseBuildInfo unchangeable with tinker
-                      "tinker.sample.android.app.BaseBuildInfo"
+                    //use sample, let BaseBuildInfo unchangeable with tinker
+                    "tinker.sample.android.app.BaseBuildInfo"
             ]
         }
 
@@ -350,7 +381,7 @@ if (buildWithTinker()) {
              * optional，default '7za'
              * the 7zip artifact path, it will use the right 7za with your platform
              */
-           zipArtifact = "com.tencent.mm:SevenZip:1.1.10"
+            zipArtifact = "com.tencent.mm:SevenZip:1.1.10"
             /**
              * optional，default '7za'
              * you can specify the 7za path yourself, it will overwrite the zipArtifact value
@@ -365,8 +396,8 @@ if (buildWithTinker()) {
     }
     boolean hasFlavors = flavors.size() > 0
     /**
-    * bak apk and mapping
-    */
+     * bak apk and mapping
+     */
     android.applicationVariants.all { variant ->
         /**
          * task type, you want to bak

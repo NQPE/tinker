@@ -1,4 +1,4 @@
-include ':tinker-commons'
+include ':tinker-commons', ':tinker_souce_android'
 include ':tinker-android:tinker-android-loader'
 include ':tinker-android:tinker-android-lib'
 include ':tinker-android:tinker-android-anno'

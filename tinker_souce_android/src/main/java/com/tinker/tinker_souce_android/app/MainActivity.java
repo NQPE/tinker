@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tinker.sample.android.app;
+package com.tinker.tinker_souce_android.app;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -35,9 +35,9 @@ import com.tencent.tinker.lib.tinker.Tinker;
 import com.tencent.tinker.lib.tinker.TinkerInstaller;
 import com.tencent.tinker.loader.shareutil.ShareConstants;
 import com.tencent.tinker.loader.shareutil.ShareTinkerInternals;
+import com.tinker.tinker_souce_android.R;
+import com.tinker.tinker_souce_android.util.Utils;
 
-import tinker.sample.android.R;
-import tinker.sample.android.util.Utils;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "Tinker.MainActivity";
@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         Log.e(TAG, "i am on onCreate classloader:" + MainActivity.class.getClassLoader().toString());
         //test resource change
         Log.e(TAG, "i am on onCreate string:" + getResources().getString(R.string.test_resource));
-        Log.e(TAG, "i am on patch onCreate");
+//        Log.e(TAG, "i am on patch onCreate");
 
         Button loadPatchButton = (Button) findViewById(R.id.loadPatch);
 
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button buildInfoButton = (Button) findViewById(R.id.showInfo);
 
-        buildInfoButton.setText("修改后的show info");
+        buildInfoButton.setText("show info");
 
         buildInfoButton.setOnClickListener(new View.OnClickListener() {
             @Override
