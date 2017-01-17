@@ -96,7 +96,12 @@ public class AnnotationProcessor extends AbstractProcessor {
                 .replaceAll("%TINKER_LOAD_VERIFY_FLAG%", "" + ca.loadVerifyFlag());
 
             try {
+                //processingEnv：注释处理工具框架将提供一个具有实现此接口的对象的注释 processor，因此 processor 可以使用该框架提供的设施来编写新文件、报告错误消息并查找其他实用工具。
+                //processingEnv.getFiler() 返回用来创建新源、类或辅助文件的 Filer。
+                //processingEnv.getFiler().createSourceFile(CharSequence name, Element... originatingElements)：
+                //创建一个新的源文件，并返回一个对象以允许写入它。文件的名称和路径（相对于类文件的根目录输出位置）基于将写入的类型名称
                 JavaFileObject fileObject = processingEnv.getFiler().createSourceFile(applicationPackageName + "." + applicationClassName);
+                //打印出的log为： 注: Creating file:/C:/Users/lenovo/Desktop/TinkerSourceCode/tinker/tinker_souce_android/build/generated/source/apt/debug/com/tinker/tinker_souce_android/app/SampleApplication.java
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Creating " + fileObject.toUri());
                 Writer writer = fileObject.openWriter();
                 try {

@@ -59,11 +59,14 @@ public class SharePatchInfo {
         SharePatchInfo patchInfo;
         ShareFileLockHelper fileLock = null;
         try {
+            //读取patch信息进行锁定 在读取过程中不让其他线程来读取
             fileLock = ShareFileLockHelper.getFileLock(lockFile);
+            //读取patch信息并封装在SharePatchInfo类里面
             patchInfo = readAndCheckProperty(pathInfoFile);
         } catch (Exception e) {
             throw new TinkerRuntimeException("readAndCheckPropertyWithLock fail", e);
         } finally {
+            //读取完毕解锁
             try {
                 if (fileLock != null) {
                     fileLock.close();
@@ -105,6 +108,7 @@ public class SharePatchInfo {
     }
 
     private static SharePatchInfo readAndCheckProperty(File pathInfoFile) {
+        //只是验证old以及new是否是32为的MD5字符串 如果是 就是读取patch信息成功
         boolean isReadPatchSuccessful = false;
         int numAttempts = 0;
         String oldVer = null;

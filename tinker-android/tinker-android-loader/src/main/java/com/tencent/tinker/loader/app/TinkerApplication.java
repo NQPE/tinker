@@ -72,6 +72,7 @@ public abstract class TinkerApplication extends Application {
 
     private ApplicationLike applicationLike = null;
 
+    //从开机到现在的毫秒数（手机睡眠(sleep)的时间也包括在内）
     private long applicationStartElapsedTime;
     private long applicationStartMillisTime;
 
@@ -99,6 +100,11 @@ public abstract class TinkerApplication extends Application {
         this(tinkerFlags, delegateClassName, TinkerLoader.class.getName(), false);
     }
 
+    /**
+     * 通过反射构造ApplicationLike
+     *
+     * @return
+     */
     private ApplicationLike createDelegate() {
         try {
             // Use reflection to create the delegate so it doesn't need to go into the primary dex.
@@ -125,13 +131,18 @@ public abstract class TinkerApplication extends Application {
      * here since {@link android.app.Application#onCreate} will not have yet been called.
      */
     private void onBaseContextAttached(Context base) {
+        //从开机到现在的毫秒数（手机睡眠(sleep)的时间也包括在内）
         applicationStartElapsedTime = SystemClock.elapsedRealtime();
         applicationStartMillisTime = System.currentTimeMillis();
+        //加载tinker 这里时机是在重写{@link Application#attachBaseContext}中
         loadTinker();
+        //反射创建代理ApplicationLike
         ensureDelegate();
+        //在代理中执行重写Application#attachBaseContext
         applicationLike.onBaseContextAttached(base);
         //reset save mode
         if (useSafeMode) {
+            //将启动次数写入SP中 这个是第一次 为 0
             String processName = ShareTinkerInternals.getProcessName(this);
             String preferName = ShareConstants.TINKER_OWN_PREFERENCE_CONFIG + processName;
             SharedPreferences sp = getSharedPreferences(preferName, Context.MODE_PRIVATE);
@@ -142,7 +153,9 @@ public abstract class TinkerApplication extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+        //方法设置处理程序时调用线程突然终止默认由于未捕获到异常，并没有其他的处理程序被定义为该线程
         Thread.setDefaultUncaughtExceptionHandler(new TinkerUncaughtHandler(this));
+        //主要是加载补丁和代理Like调用
         onBaseContextAttached(base);
     }
 
@@ -158,6 +171,7 @@ public abstract class TinkerApplication extends Application {
 
             Method loadMethod = tinkerLoadClass.getMethod(TINKER_LOADER_METHOD, TinkerApplication.class, int.class, boolean.class);
             Constructor<?> constructor = tinkerLoadClass.getConstructor();
+            //反射执行TinkerLoader的tryLoad(TinkerApplication app, int tinkerFlag, boolean tinkerLoadVerifyFlag)方法
             tinkerResultIntent = (Intent) loadMethod.invoke(constructor.newInstance(), this, tinkerFlags, tinkerLoadVerifyFlag);
         } catch (Throwable e) {
             //has exception, put exception error code
@@ -176,6 +190,8 @@ public abstract class TinkerApplication extends Application {
     @Override
     public void onTerminate() {
         super.onTerminate();
+        //当终止应用程序对象时调用，不保证一定被调用，当程序是被内核终止以便为其他应用程序释放资源，那
+        //么将不会提醒，并且不调用应用程序的对象的onTerminate方法而直接终止进程
         if (applicationLike != null) {
             applicationLike.onTerminate();
         }
@@ -184,6 +200,8 @@ public abstract class TinkerApplication extends Application {
     @Override
     public void onLowMemory() {
         super.onLowMemory();
+        //当后台程序已经终止资源还匮乏时会调用这个方法。好的应用程序一般会在这个方法里面释放一些不必
+        //要的资源来应付当后台程序已经终止，前台应用程序内存还不够时的情况。
         if (applicationLike != null) {
             applicationLike.onLowMemory();
         }
@@ -201,6 +219,7 @@ public abstract class TinkerApplication extends Application {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        //配置改变时触发这个方法
         if (applicationLike != null) {
             applicationLike.onConfigurationChanged(newConfig);
         }

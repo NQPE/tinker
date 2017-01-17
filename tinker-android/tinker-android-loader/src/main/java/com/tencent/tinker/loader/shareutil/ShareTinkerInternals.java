@@ -81,6 +81,9 @@ public class ShareTinkerInternals {
 
     /**
      * thinker package check
+     * 主要是检查base里的tinkerID是否和patch中的tinkerId相同
+     * 都满足条件 tinkerID也相同就返回ShareConstants.ERROR_PACKAGE_CHECK_OK==0
+     *
      * @param context
      * @param tinkerFlag
      * @param patchFile
@@ -96,6 +99,10 @@ public class ShareTinkerInternals {
     }
     /**
      * check patch file signature and TINKER_ID
+     * 验证签名
+     * 取出补丁里面的assets/package_meta.txt信息
+     * BaseAPP里面Manifest中的TinkerId与package_meta.txt里面的TinkerId
+     * 进行对比 只有两个ID相同才能通过
      *
      * @param context
      * @param patchFile
@@ -103,15 +110,17 @@ public class ShareTinkerInternals {
      * @return
      */
     public static int checkSignatureAndTinkerID(Context context, File patchFile, ShareSecurityCheck securityCheck) {
+        //验证meta信息以及是否签名
         if (!securityCheck.verifyPatchMetaSignature(patchFile)) {
             return ShareConstants.ERROR_PACKAGE_CHECK_SIGNATURE_FAIL;
         }
-
+        //获取Manifest中的TinkerId
         String oldTinkerId = getManifestTinkerID(context);
         if (oldTinkerId == null) {
             return ShareConstants.ERROR_PACKAGE_CHECK_APK_TINKER_ID_NOT_FOUND;
         }
-
+        //得到assets/package_meta.txt里面的信息并且封装为map
+        //这个信息对应到AS.APP项目下的build的packageConfig设置的信息
         HashMap<String, String> properties = securityCheck.getPackagePropertiesIfPresent();
 
         if (properties == null) {
@@ -130,7 +139,16 @@ public class ShareTinkerInternals {
     }
 
 
+    /**
+     * 再次检查 各种需要支持的修复类型
+     * 是否在补丁包里拥有meta信息
+     *
+     * @param securityCheck
+     * @param tinkerFlag 需要支持的修复类型 默认全部修复 即dex so res
+     * @return
+     */
     public static int checkPackageAndTinkerFlag(ShareSecurityCheck securityCheck, int tinkerFlag) {
+        //一般默认全部修复 就不检查meta信息是否冲突了 直接返回OK
         if (isTinkerEnabledAll(tinkerFlag)) {
             return ShareConstants.ERROR_PACKAGE_CHECK_OK;
         }

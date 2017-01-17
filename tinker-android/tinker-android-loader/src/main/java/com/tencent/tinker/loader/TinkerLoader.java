@@ -72,6 +72,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
             ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_PATCH_DIRECTORY_NOT_EXIST);
             return;
         }
+        //patchDirectoryPath==== /data/data/com.tinker.tinker_souce_android/tinker
         String patchDirectoryPath = patchDirectoryFile.getAbsolutePath();
 
         //check patch directory whether exist
@@ -90,12 +91,14 @@ public class TinkerLoader extends AbstractTinkerLoader {
             ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_PATCH_INFO_NOT_EXIST);
             return;
         }
+        //tinker/info.lock
         //old = 641e634c5b8f1649c75caf73794acbdf
         //new = 2c150d8560334966952678930ba67fa8
         File patchInfoLockFile = SharePatchFileUtil.getPatchInfoLockFile(patchDirectoryPath);
 
         patchInfo = SharePatchInfo.readAndCheckPropertyWithLock(patchInfoFile, patchInfoLockFile);
         if (patchInfo == null) {
+            Log.w(TAG, "tryLoadPatchFiles:onPatchInfoCorrupted : patchInfo == null");
             ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_PATCH_INFO_CORRUPTED);
             return;
         }
@@ -126,7 +129,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
             return;
         }
 
-        //patch-641e634c
+        //patch-2c150d85
         String patchName = SharePatchFileUtil.getPatchVersionDirectory(version);
         if (patchName == null) {
             Log.w(TAG, "tryLoadPatchFiles:patchName is null");
@@ -134,7 +137,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
             ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_PATCH_VERSION_DIRECTORY_NOT_EXIST);
             return;
         }
-        //tinker/patch.info/patch-641e634c
+        //tinker/patch-2c150d85
         String patchVersionDirectory = patchDirectoryPath + "/" + patchName;
         File patchVersionDirectoryFile = new File(patchVersionDirectory);
 
@@ -145,7 +148,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
             return;
         }
 
-        //tinker/patch.info/patch-641e634c/patch-641e634c.apk
+        //tinker/patch-2c150d85/patch-2c150d85.apk
         File patchVersionFile = new File(patchVersionDirectoryFile.getAbsolutePath(), SharePatchFileUtil.getPatchVersionFile(version));
 
         if (!SharePatchFileUtil.isLegalFile(patchVersionFile)) {
@@ -156,7 +159,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
         }
 
         ShareSecurityCheck securityCheck = new ShareSecurityCheck(app);
-
+        //主要是检查base和patch里面的tinkerID是否相同
         int returnCode = ShareTinkerInternals.checkTinkerPackage(app, tinkerFlag, patchVersionFile, securityCheck);
         if (returnCode != ShareConstants.ERROR_PACKAGE_CHECK_OK) {
             Log.w(TAG, "tryLoadPatchFiles:checkTinkerPackage");
@@ -170,7 +173,8 @@ public class TinkerLoader extends AbstractTinkerLoader {
         final boolean isEnabledForDex = ShareTinkerInternals.isTinkerEnabledForDex(tinkerFlag);
 
         if (isEnabledForDex) {
-            //tinker/patch.info/patch-641e634c/dex
+            //tinker/patch-2c150d85/dex
+            //2017/1/17 18:33 分析断点
             boolean dexCheck = TinkerDexLoader.checkComplete(patchVersionDirectory, securityCheck, resultIntent);
             if (!dexCheck) {
                 //file not found, do not load patch

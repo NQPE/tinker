@@ -66,7 +66,8 @@ public class ShareSecurityCheck {
 
     /**
      * Nullable
-     *
+     *得到assets/package_meta.txt里面的信息并且封装为map
+     *这个信息对应到AS.APP项目下的build的packageConfig设置的信息
      * @return HashMap<String, String>
      */
     public HashMap<String, String> getPackagePropertiesIfPresent() {
@@ -125,7 +126,9 @@ public class ShareSecurityCheck {
                 if (!name.endsWith(ShareConstants.META_SUFFIX)) {
                     continue;
                 }
+                //将APK里面meta.txt的信息存入metaContentMap中
                 metaContentMap.put(name, SharePatchFileUtil.loadDigestes(jarFile, jarEntry));
+                //验证是否签名
                 Certificate[] certs = jarEntry.getCertificates();
                 if (certs == null) {
                     return false;

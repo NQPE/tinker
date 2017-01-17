@@ -62,6 +62,7 @@ public class TinkerUncaughtHandler implements Thread.UncaughtExceptionHandler {
                 }
                 PrintWriter pw = null;
                 try {
+                    //记录崩溃错误信息到crashFile文件中
                     pw = new PrintWriter(new FileWriter(crashFile, false));
                     pw.println("process:" + ShareTinkerInternals.getProcessName(this.context));
                     pw.println(ShareTinkerInternals.getExceptionCauseString(ex));

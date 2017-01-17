@@ -45,7 +45,9 @@ public class ShareFileLockHelper implements Closeable {
         while (numAttempts < MAX_LOCK_ATTEMPTS) {
             numAttempts++;
             try {
+                //获取对此通道的文件的独占锁定。
                 localFileLock = outputStream.getChannel().lock();
+                //第一次进入isGetLockSuccess=true 即跳出循环 线程不sleep
                 isGetLockSuccess = (localFileLock != null);
                 if (isGetLockSuccess) {
                     break;
