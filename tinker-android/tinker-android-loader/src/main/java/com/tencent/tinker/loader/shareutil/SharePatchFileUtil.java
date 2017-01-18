@@ -398,6 +398,7 @@ public class SharePatchFileUtil {
             if (lastDot < 0) {
                 fileName += ShareConstants.DEX_SUFFIX;
             } else {
+                //将.jar结尾的换为.dex
                 StringBuilder sb = new StringBuilder(lastDot + 4);
                 sb.append(fileName, 0, lastDot);
                 sb.append(ShareConstants.DEX_SUFFIX);

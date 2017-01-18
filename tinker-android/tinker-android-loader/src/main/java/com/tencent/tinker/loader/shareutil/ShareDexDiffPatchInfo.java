@@ -66,6 +66,15 @@ public class ShareDexDiffPatchInfo {
         }
     }
 
+    /**
+     *
+     * 以','分隔 分别对应：name, path, destMd5InDvm, destMd5InArt, dexDiffMd5, oldDexCrc, dexMode
+     * assets/dex_meta.txt ：classes.dex,,3fa38034d90cf6fbd4207a4c0789dfb2,3fa38034d90cf6fbd4207a4c0789dfb2,8e244ce569c4b6c9c786d3b51d29ed32,2699196016,jar
+     *                       test.dex,,56900442eb5b7e1de45449d0685e6e00,56900442eb5b7e1de45449d0685e6e00,0,0,jar
+     * 封装为ShareDexDiffPatchInfo类 并add进dexList里
+     * @param meta assets/dex_meta.txt里面的字符串
+     * @param dexList
+     */
     public static void parseDexDiffPatchInfo(String meta, ArrayList<ShareDexDiffPatchInfo> dexList) {
         if (meta == null || meta.length() == 0) {
             return;
@@ -95,6 +104,11 @@ public class ShareDexDiffPatchInfo {
 
     }
 
+    /**
+     * 验证ShareDexDiffPatchInfo在art或在dvm虚拟机中是否拥有匹配的md5
+     * @param info
+     * @return
+     */
     public static boolean checkDexDiffPatchInfo(ShareDexDiffPatchInfo info) {
         if (info == null) {
             return false;

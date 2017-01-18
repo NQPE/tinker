@@ -85,7 +85,7 @@ public class ShareConstants {
     public static final String TINKER_ENABLE_CONFIG           = "tinker_enable_";
 
     /**
-     * only for each process
+     * only for each process 就是SP的key:TINKER_OWN_PREFERENCE_CONFIG+ processName
      */
     public static final String TINKER_OWN_PREFERENCE_CONFIG = "tinker_own_config_";
     public static final String TINKER_SAFE_MODE_COUNT       = "safe_mode_count";

@@ -171,10 +171,12 @@ public class TinkerLoader extends AbstractTinkerLoader {
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_PACKAGE_CONFIG, securityCheck.getPackagePropertiesIfPresent());
 
         final boolean isEnabledForDex = ShareTinkerInternals.isTinkerEnabledForDex(tinkerFlag);
-
+        //是否支持补丁修改dex类型
         if (isEnabledForDex) {
             //tinker/patch-2c150d85/dex
             //2017/1/17 18:33 分析断点
+            //主要是验证meta信息里面dex是否与补丁匹配
+            //并且将meta信息里面的 K:info.realName V:info.destMd5InDvm 打包为map传入intent里面
             boolean dexCheck = TinkerDexLoader.checkComplete(patchVersionDirectory, securityCheck, resultIntent);
             if (!dexCheck) {
                 //file not found, do not load patch
@@ -183,10 +185,11 @@ public class TinkerLoader extends AbstractTinkerLoader {
             }
         }
 
+        //检查so补丁 TODO
         final boolean isEnabledForNativeLib = ShareTinkerInternals.isTinkerEnabledForNativeLib(tinkerFlag);
 
         if (isEnabledForNativeLib) {
-            //tinker/patch.info/patch-641e634c/lib
+            //tinker/patch-641e634c/lib
             boolean libCheck = TinkerSoLoader.checkComplete(patchVersionDirectory, securityCheck, resultIntent);
             if (!libCheck) {
                 //file not found, do not load patch
@@ -195,10 +198,11 @@ public class TinkerLoader extends AbstractTinkerLoader {
             }
         }
 
-        //check resource
+        //check resource 检查res资源补丁
         final boolean isEnabledForResource = ShareTinkerInternals.isTinkerEnabledForResource(tinkerFlag);
         Log.w(TAG, "tryLoadPatchFiles:isEnabledForResource:" + isEnabledForResource);
         if (isEnabledForResource) {
+            //根据res_meta.xml文件中记载的信息检查文件(res/resources.apk)是否存在
             boolean resourceCheck = TinkerResourceLoader.checkComplete(app, patchVersionDirectory, securityCheck, resultIntent);
             if (!resourceCheck) {
                 //file not found, do not load patch
@@ -206,7 +210,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
                 return;
             }
         }
-        //only work for art platform oat
+        //only work for art platform oat //ota应该是ROM厂商的系统升级
         boolean isSystemOTA = ShareTinkerInternals.isVmArt() && ShareTinkerInternals.isSystemOTA(patchInfo.fingerPrint);
         resultIntent.putExtra(ShareIntentUtil.INTENT_PATCH_SYSTEM_OTA, isSystemOTA);
 
@@ -214,7 +218,7 @@ public class TinkerLoader extends AbstractTinkerLoader {
         if (isSystemOTA
             || (mainProcess && versionChanged)) {
             patchInfo.oldVersion = version;
-            //update old version to new
+            //update old version to new 替换oldversion为newversion
             if (!SharePatchInfo.rewritePatchInfoFileWithLock(patchInfoFile, patchInfo, patchInfoLockFile)) {
                 ShareIntentUtil.setIntentReturnCode(resultIntent, ShareConstants.ERROR_LOAD_PATCH_REWRITE_PATCH_INFO_FAIL);
                 Log.w(TAG, "tryLoadPatchFiles:onReWritePatchInfoCorrupted");
@@ -227,17 +231,20 @@ public class TinkerLoader extends AbstractTinkerLoader {
             Log.w(TAG, "tryLoadPatchFiles:checkSafeModeCount fail");
             return;
         }
+        //前面的一系列都是检查补丁的信息情况 通过检查后 下面就进入真正的加载补丁功能
         //now we can load patch jar
         if (isEnabledForDex) {
+            //真正的开始加载补丁dex
             boolean loadTinkerJars = TinkerDexLoader.loadTinkerJars(app, tinkerLoadVerifyFlag, patchVersionDirectory, resultIntent, isSystemOTA);
             if (!loadTinkerJars) {
                 Log.w(TAG, "tryLoadPatchFiles:onPatchLoadDexesFail");
                 return;
             }
         }
-
+        //真正加载res资源
         //now we can load patch resource
         if (isEnabledForResource) {
+            //真正加载res资源
             boolean loadTinkerResources = TinkerResourceLoader.loadTinkerResources(app, tinkerLoadVerifyFlag, patchVersionDirectory, resultIntent);
             if (!loadTinkerResources) {
                 Log.w(TAG, "tryLoadPatchFiles:onPatchLoadResourcesFail");
@@ -250,6 +257,11 @@ public class TinkerLoader extends AbstractTinkerLoader {
         return;
     }
 
+    /**
+     * 检查加载补丁安全次数是否超标
+     * @param application
+     * @return
+     */
     private boolean checkSafeModeCount(TinkerApplication application) {
         String processName = ShareTinkerInternals.getProcessName(application);
         String preferName = ShareConstants.TINKER_OWN_PREFERENCE_CONFIG + processName;

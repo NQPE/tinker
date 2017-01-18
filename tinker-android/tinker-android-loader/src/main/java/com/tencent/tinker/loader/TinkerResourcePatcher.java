@@ -65,6 +65,16 @@ class TinkerResourcePatcher {
 
 //    private static boolean isMiuiSystem = false;
 
+    /**
+     * 判断是否支持反射更新资源
+     * 按照步骤来吧，首先新建一个AssetManager对象，其中对BaiduROM做了兼容(BaiduAssetManager)，拿到其中的addAssetPath方法的反射addAssetPathMethod，然后拿到ensureStringBlocks的反射，然后区分版本拿到Resources的集合。
+     SDK >= 19，从ResourcesManager中拿到mActiveResources变量，是个持有Resources的ArrayMap，赋值给references，Android N中该变量叫做mResourceReferences
+     SDK < 19，从ActivityThread中获取mActiveResources，是个HashMap持有Resources，赋值给references
+     如果references为空，说明该系统不支持资源补丁，throw 一个IllegalStateException被上层调用catch。
+
+     * @param context
+     * @throws Throwable
+     */
     public static void isResourceCanPatch(Context context) throws Throwable {
         //   - Replace mResDir to point to the external resource file instead of the .apk. This is
         //     used as the asset path for new Resources objects.
@@ -162,6 +172,12 @@ class TinkerResourcePatcher {
     }
 
     /**
+     * 调用monkeyPatchExistingResources方法(这个方法的名字跟InstantRun的资源补丁方法名是一样的)，
+     * 将补丁资源路径(res/resources.apk)传递进去，
+     * 简单描述为反射调用新建的AssetManager的addAssetPath将路径穿进去，
+     * 然后主动调用ensureStringBlocks方法确保资源的字符串索引创建出来；
+     * 然后循环遍历持有Resources对象的references集合，依次替换其中的AssetManager为新建的AssetManager，
+     * 最后调用Resources.updateConfiguration将Resources对象的配置信息更新到最新状态，完成整个资源替换的过程。
      * @param context
      * @param externalResourceFile
      * @throws Throwable

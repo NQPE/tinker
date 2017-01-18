@@ -79,6 +79,13 @@ public class SharePatchInfo {
         return patchInfo;
     }
 
+    /**
+     * 将以前oldversion换为newversion并且写入patchinfofile里面
+     * @param pathInfoFile
+     * @param info
+     * @param lockFile
+     * @return
+     */
     public static boolean rewritePatchInfoFileWithLock(File pathInfoFile, SharePatchInfo info, File lockFile) {
         if (pathInfoFile == null || info == null || lockFile == null) {
             return false;

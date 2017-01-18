@@ -52,7 +52,7 @@ public class SystemClassLoaderAdder {
 
     @SuppressLint("NewApi")
     public static void installDexes(Application application, PathClassLoader loader, File dexOptDir, List<File> files)
-        throws Throwable {
+            throws Throwable {
 
         if (!files.isEmpty()) {
             ClassLoader classLoader = loader;
@@ -111,13 +111,17 @@ public class SystemClassLoaderAdder {
 
     /**
      * Installer for platform versions 23.
+     * 23 <= SDK < 24
+     Android 6.0 <= Android系统 < Android 7.0
+     Android6.0以后把makeDexElements给改了，改成了makePathElements(List,File,List)，
+     如果找不到的话再找一下makeDexElements(List,File,List)。其余没啥区别。
      */
     private static final class V23 {
 
         private static void install(ClassLoader loader, List<File> additionalClassPathEntries,
                                     File optimizedDirectory)
-            throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, InvocationTargetException, NoSuchMethodException, IOException {
+                throws IllegalArgumentException, IllegalAccessException,
+                NoSuchFieldException, InvocationTargetException, NoSuchMethodException, IOException {
             /* The patched class loader is expected to be a descendant of
              * dalvik.system.BaseDexClassLoader. We modify its
              * dalvik.system.DexPathList pathList field to append additional DEX
@@ -127,8 +131,8 @@ public class SystemClassLoaderAdder {
             Object dexPathList = pathListField.get(loader);
             ArrayList<IOException> suppressedExceptions = new ArrayList<IOException>();
             ShareReflectUtil.expandFieldArray(dexPathList, "dexElements", makePathElements(dexPathList,
-                new ArrayList<File>(additionalClassPathEntries), optimizedDirectory,
-                suppressedExceptions));
+                    new ArrayList<File>(additionalClassPathEntries), optimizedDirectory,
+                    suppressedExceptions));
             if (suppressedExceptions.size() > 0) {
                 for (IOException e : suppressedExceptions) {
                     Log.w(TAG, "Exception in makePathElement", e);
@@ -143,14 +147,14 @@ public class SystemClassLoaderAdder {
          * {@code private static final dalvik.system.DexPathList#makePathElements}.
          */
         private static Object[] makePathElements(
-            Object dexPathList, ArrayList<File> files, File optimizedDirectory,
-            ArrayList<IOException> suppressedExceptions)
-            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+                Object dexPathList, ArrayList<File> files, File optimizedDirectory,
+                ArrayList<IOException> suppressedExceptions)
+                throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 
             Method makePathElements;
             try {
                 makePathElements = ShareReflectUtil.findMethod(dexPathList, "makePathElements", List.class, File.class,
-                    List.class);
+                        List.class);
             } catch (NoSuchMethodException e) {
                 Log.e(TAG, "NoSuchMethodException: makePathElements(List,File,List) failure");
                 try {
@@ -173,13 +177,17 @@ public class SystemClassLoaderAdder {
 
     /**
      * Installer for platform versions 19.
+     * 19 <= SDK < 23
+     Android 4.4 <= Android系统 < Android 6.0
+     跟v14的区别不大，只是在makeDexElements方法中多加了一个参数suppressedExceptions异常数组，
+     另外在makeDexElements的catch异常中多加了一次重试
      */
     private static final class V19 {
 
         private static void install(ClassLoader loader, List<File> additionalClassPathEntries,
                                     File optimizedDirectory)
-            throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, InvocationTargetException, NoSuchMethodException, IOException {
+                throws IllegalArgumentException, IllegalAccessException,
+                NoSuchFieldException, InvocationTargetException, NoSuchMethodException, IOException {
             /* The patched class loader is expected to be a descendant of
              * dalvik.system.BaseDexClassLoader. We modify its
              * dalvik.system.DexPathList pathList field to append additional DEX
@@ -189,8 +197,8 @@ public class SystemClassLoaderAdder {
             Object dexPathList = pathListField.get(loader);
             ArrayList<IOException> suppressedExceptions = new ArrayList<IOException>();
             ShareReflectUtil.expandFieldArray(dexPathList, "dexElements", makeDexElements(dexPathList,
-                new ArrayList<File>(additionalClassPathEntries), optimizedDirectory,
-                suppressedExceptions));
+                    new ArrayList<File>(additionalClassPathEntries), optimizedDirectory,
+                    suppressedExceptions));
             if (suppressedExceptions.size() > 0) {
                 for (IOException e : suppressedExceptions) {
                     Log.w(TAG, "Exception in makeDexElement", e);
@@ -204,14 +212,14 @@ public class SystemClassLoaderAdder {
          * {@code private static final dalvik.system.DexPathList#makeDexElements}.
          */
         private static Object[] makeDexElements(
-            Object dexPathList, ArrayList<File> files, File optimizedDirectory,
-            ArrayList<IOException> suppressedExceptions)
-            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+                Object dexPathList, ArrayList<File> files, File optimizedDirectory,
+                ArrayList<IOException> suppressedExceptions)
+                throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 
             Method makeDexElements = null;
             try {
                 makeDexElements = ShareReflectUtil.findMethod(dexPathList, "makeDexElements", ArrayList.class, File.class,
-                    ArrayList.class);
+                        ArrayList.class);
             } catch (NoSuchMethodException e) {
                 Log.e(TAG, "NoSuchMethodException: makeDexElements(ArrayList,File,ArrayList) failure");
                 try {
@@ -233,8 +241,8 @@ public class SystemClassLoaderAdder {
 
         private static void install(ClassLoader loader, List<File> additionalClassPathEntries,
                                     File optimizedDirectory)
-            throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
+                throws IllegalArgumentException, IllegalAccessException,
+                NoSuchFieldException, InvocationTargetException, NoSuchMethodException {
             /* The patched class loader is expected to be a descendant of
              * dalvik.system.BaseDexClassLoader. We modify its
              * dalvik.system.DexPathList pathList field to append additional DEX
@@ -243,19 +251,39 @@ public class SystemClassLoaderAdder {
             Field pathListField = ShareReflectUtil.findField(loader, "pathList");
             Object dexPathList = pathListField.get(loader);
             ShareReflectUtil.expandFieldArray(dexPathList, "dexElements", makeDexElements(dexPathList,
-                new ArrayList<File>(additionalClassPathEntries), optimizedDirectory));
+                    new ArrayList<File>(additionalClassPathEntries), optimizedDirectory));
         }
 
         /**
          * A wrapper around
          * {@code private static final dalvik.system.DexPathList#makeDexElements}.
+         * private static Element[] makeDexElements(ArrayList<File> files,
+         * File optimizedDirectory) {
+         * ArrayList<Element> elements = new ArrayList<Element>();
+         * for (File file : files) {
+         * ZipFile zip = null;
+         * DexFile dex = null;
+         * String name = file.getName();
+         * if (name.endsWith(DEX_SUFFIX)) {
+         * dex = loadDexFile(file, optimizedDirectory);
+         * } else if (name.endsWith(APK_SUFFIX) || name.endsWith(JAR_SUFFIX)
+         * || name.endsWith(ZIP_SUFFIX)) {
+         * zip = new ZipFile(file);
+         * }
+         * ……
+         * if ((zip != null) || (dex != null)) {
+         * elements.add(new Element(file, zip, dex));
+         * }
+         * }
+         * return elements.toArray(new Element[elements.size()]);
+         * }
          */
         private static Object[] makeDexElements(
-            Object dexPathList, ArrayList<File> files, File optimizedDirectory)
-            throws IllegalAccessException, InvocationTargetException,
-            NoSuchMethodException {
+                Object dexPathList, ArrayList<File> files, File optimizedDirectory)
+                throws IllegalAccessException, InvocationTargetException,
+                NoSuchMethodException {
             Method makeDexElements =
-                ShareReflectUtil.findMethod(dexPathList, "makeDexElements", ArrayList.class, File.class);
+                    ShareReflectUtil.findMethod(dexPathList, "makeDexElements", ArrayList.class, File.class);
 
             return (Object[]) makeDexElements.invoke(dexPathList, files, optimizedDirectory);
         }
@@ -266,8 +294,8 @@ public class SystemClassLoaderAdder {
      */
     private static final class V4 {
         private static void install(ClassLoader loader, List<File> additionalClassPathEntries, File optimizedDirectory)
-            throws IllegalArgumentException, IllegalAccessException,
-            NoSuchFieldException, IOException {
+                throws IllegalArgumentException, IllegalAccessException,
+                NoSuchFieldException, IOException {
             /* The patched class loader is expected to be a descendant of
              * dalvik.system.DexClassLoader. We modify its
              * fields mPaths, mFiles, mZips and mDexs to append additional DEX
@@ -283,7 +311,7 @@ public class SystemClassLoaderAdder {
             ZipFile[] extraZips = new ZipFile[extraSize];
             DexFile[] extraDexs = new DexFile[extraSize];
             for (ListIterator<File> iterator = additionalClassPathEntries.listIterator();
-                 iterator.hasNext();) {
+                 iterator.hasNext(); ) {
                 File additionalEntry = iterator.next();
                 String entryPath = additionalEntry.getAbsolutePath();
                 path.append(':').append(entryPath);

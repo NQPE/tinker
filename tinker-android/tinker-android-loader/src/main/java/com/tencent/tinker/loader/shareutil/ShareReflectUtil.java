@@ -107,7 +107,11 @@ public class ShareReflectUtil {
     /**
      * Replace the value of a field containing a non null array, by a new array containing the
      * elements of the original array plus the elements of extraElements.
-     *
+     * 注意传进来的值分别是pathList,”dexElements”和新生成的dexElements数组，
+     * 找到pathList的原始oldDexElements，然后生成一个新的数组combined，
+     * 长度是oldDexElements.length + newDexElements.length。
+     * 然后将newDexElements拷贝到combined的前面，将oldDexElements拷贝的combined的剩余位置，
+     * 我们称之为dex前置。
      * @param instance      the instance whose field is to be modified.
      * @param fieldName     the field to modify.
      * @param extraElements elements to append at the end of the array.
@@ -117,10 +121,11 @@ public class ShareReflectUtil {
         Field jlrField = findField(instance, fieldName);
 
         Object[] original = (Object[]) jlrField.get(instance);
+        //getClass().getComponentType()返回表示数组组件类型的 Class。如果此类不表示数组类，则此方法返回null
         Object[] combined = (Object[]) Array.newInstance(original.getClass().getComponentType(), original.length + extraElements.length);
 
         // NOTE: changed to copy extraElements first, for patch load first
-
+        //将newDexElements拷贝到combined的前面，将oldDexElements拷贝的combined的剩余位置
         System.arraycopy(extraElements, 0, combined, 0, extraElements.length);
         System.arraycopy(original, 0, combined, extraElements.length, original.length);
 

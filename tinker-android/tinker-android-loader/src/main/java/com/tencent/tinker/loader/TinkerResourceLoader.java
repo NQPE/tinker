@@ -52,7 +52,7 @@ public class TinkerResourceLoader {
         File resourceFile = new File(resourceString);
         long start = System.currentTimeMillis();
 
-        if (tinkerLoadVerifyFlag) {
+        if (tinkerLoadVerifyFlag) {//一般默认不验证MD5
             if (!SharePatchFileUtil.checkResourceArscMd5(resourceFile, resPatchInfo.resArscMd5)) {
                 Log.e(TAG, "Failed to load resource file, path: " + resourceFile.getPath() + ", expect md5: " + resPatchInfo.resArscMd5);
                 ShareIntentUtil.setIntentReturnCode(intentResult, ShareConstants.ERROR_LOAD_PATCH_VERSION_RESOURCE_MD5_MISMATCH);
@@ -80,6 +80,7 @@ public class TinkerResourceLoader {
     }
 
     /**
+     * 根据res_meta.xml文件中记载的信息检查文件(res/resources.apk)是否存在
      * resource file exist?
      * fast check, only check whether exist
      *
@@ -118,6 +119,7 @@ public class TinkerResourceLoader {
             return false;
         }
         try {
+            //判断是否支持反射更新资源
             TinkerResourcePatcher.isResourceCanPatch(context);
         } catch (Throwable e) {
             Log.e(TAG, "resource hook check failed.", e);

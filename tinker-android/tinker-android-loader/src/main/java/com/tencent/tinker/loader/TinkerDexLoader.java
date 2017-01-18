@@ -76,6 +76,7 @@ public class TinkerDexLoader {
             ShareIntentUtil.setIntentReturnCode(intentResult, ShareConstants.ERROR_LOAD_PATCH_VERSION_DEX_CLASSLOADER_NULL);
             return false;
         }
+        //tinker/patch-2c150d85/dex/
         String dexPath = directory + "/" + DEX_PATH + "/";
         File optimizeDir = new File(directory + "/" + DEX_OPTIMIZE_PATH);
 //        Log.i(TAG, "loadTinkerJars: dex path: " + dexPath);
@@ -92,7 +93,7 @@ public class TinkerDexLoader {
             String path = dexPath + info.realName;
             File file = new File(path);
 
-            if (tinkerLoadVerifyFlag) {
+            if (tinkerLoadVerifyFlag) {//默认一般不验证MD5
                 long start = System.currentTimeMillis();
                 String checkMd5 = isArtPlatForm ? info.destMd5InArt : info.destMd5InDvm;
                 if (!SharePatchFileUtil.verifyDexFileMd5(file, checkMd5)) {
@@ -107,6 +108,14 @@ public class TinkerDexLoader {
             legalFiles.add(file);
         }
 
+
+        /**
+         * 至于全量新Dex在系统OTA之后触发dex2oat
+         * 可能导致App启动时ANR的问题，
+         * Tinker是通过在进入ApplicationLike之前判断fingerprint是否变化来得知系统是否进行过OTA，
+         * 然后根据判断结果手动触发多线程dex2oat加以缓解的。
+         */
+        //如果是厂商OTA 优化dex TODO
         if (isSystemOTA) {
             parallelOTAResult = true;
             parallelOTAThrowable = null;
@@ -157,6 +166,13 @@ public class TinkerDexLoader {
     }
 
     /**
+     * 主要验证assets/dex_meta.txt里面的dex信息是否与补丁的真实dex匹配存在
+     *
+     * 补丁包assets/dex_meta.txt 里面的信息
+     * 以','分隔 分别对应：name, path, destMd5InDvm, destMd5InArt, dexDiffMd5, oldDexCrc, dexMode
+     * classes.dex,,3fa38034d90cf6fbd4207a4c0789dfb2,3fa38034d90cf6fbd4207a4c0789dfb2,8e244ce569c4b6c9c786d3b51d29ed32,2699196016,jar
+     * test.dex,,56900442eb5b7e1de45449d0685e6e00,56900442eb5b7e1de45449d0685e6e00,0,0,jar
+     * 主要是将meta信息里面的 K:info.realName V:info.destMd5InDvm 打包为map传入intent里面
      * all the dex files in meta file exist?
      * fast check, only check whether exist
      *
@@ -170,6 +186,7 @@ public class TinkerDexLoader {
             return true;
         }
         dexList.clear();
+        //meta里面的信息封装为ShareDexDiffPatchInfo类 并add进dexList里
         ShareDexDiffPatchInfo.parseDexDiffPatchInfo(meta, dexList);
 
         if (dexList.isEmpty()) {
@@ -179,6 +196,7 @@ public class TinkerDexLoader {
         HashMap<String, String> dexes = new HashMap<>();
 
         for (ShareDexDiffPatchInfo info : dexList) {
+            //默认一般都是dvm art双支持
             //for dalvik, ignore art support dex
             if (isJustArtSupportDex(info)) {
                 continue;
@@ -190,7 +208,7 @@ public class TinkerDexLoader {
             }
             dexes.put(info.realName, info.destMd5InDvm);
         }
-        //tinker/patch.info/patch-641e634c/dex
+        //tinker/patch-2c150d85/dex/
         String dexDirectory = directory + "/" + DEX_PATH + "/";
 
         File dexDir = new File(dexDirectory);
@@ -199,6 +217,7 @@ public class TinkerDexLoader {
             ShareIntentUtil.setIntentReturnCode(intentResult, ShareConstants.ERROR_LOAD_PATCH_VERSION_DEX_DIRECTORY_NOT_EXIST);
             return false;
         }
+        //tinker/patch-2c150d85/odex/ 这个应该是dex优化目录
         String optimizeDexDirectory = directory + "/" + DEX_OPTIMIZE_PATH + "/";
         File optimizeDexDirectoryFile = new File(optimizeDexDirectory);
 
@@ -211,6 +230,7 @@ public class TinkerDexLoader {
                 return false;
             }
             //check dex opt whether complete also
+            //查看优化文件是否存在
             File dexOptFile = new File(SharePatchFileUtil.optimizedPathFor(dexFile, optimizeDexDirectoryFile));
             if (!SharePatchFileUtil.isLegalFile(dexOptFile)) {
                 intentResult.putExtra(ShareIntentUtil.INTENT_PATCH_MISSING_DEX_PATH, dexOptFile.getAbsolutePath());
