@@ -40,16 +40,17 @@ public class DefaultPatchListener implements PatchListener {
     /**
      * when we receive a patch, what would we do?
      * you can overwrite it
-     *
+     * 真正的补丁合成全量dex方法
      * @param path
      * @return
      */
     @Override
     public int onPatchReceived(String path) {
-
+        //检查下发的补丁文件是否合法
         int returnCode = patchCheck(path);
 
         if (returnCode == ShareConstants.ERROR_PATCH_OK) {
+            //重新开启一个服务进程来合成全量dex
             TinkerPatchService.runPatchService(context, path);
         } else {
             Tinker.with(context).getLoadReporter().onLoadPatchListenerReceiveFail(new File(path), returnCode);
@@ -58,6 +59,11 @@ public class DefaultPatchListener implements PatchListener {
 
     }
 
+    /**
+     * 检查下发的补丁文件是否合法
+     * @param path
+     * @return
+     */
     protected int patchCheck(String path) {
         Tinker manager = Tinker.with(context);
         //check SharePreferences also

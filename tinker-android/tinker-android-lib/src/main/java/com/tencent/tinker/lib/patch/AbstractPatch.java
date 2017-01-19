@@ -21,6 +21,7 @@ import android.content.Context;
 import com.tencent.tinker.lib.service.PatchResult;
 
 /**
+ * 真正的实现全量合成dex功能的函数入口 实现类UpgradePatch
  * Created by zhangshaowen on 16/3/15.
  */
 public abstract class AbstractPatch {

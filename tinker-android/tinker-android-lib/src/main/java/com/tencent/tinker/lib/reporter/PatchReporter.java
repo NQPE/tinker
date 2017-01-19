@@ -27,7 +27,7 @@ import java.io.File;
 
 /**
  * Created by zhangshaowen on 16/3/14.
- *
+ * 补丁合成全量dex过程的监听接口 实现类在DefaultPatchReporter
  * means that it is a newly patch, we would default use {@link UpgradePatch}
  * to do the job
  */

@@ -17,6 +17,8 @@
 package com.tencent.tinker.lib.listener;
 
 /**
+ * 这个是下发补丁后进行合成全量dex的入口
+ * 实现在DefaultPatchListener类
  * Created by zhangshaowen on 16/3/14.
  */
 public interface PatchListener {

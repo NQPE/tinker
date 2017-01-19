@@ -35,6 +35,9 @@ import com.tencent.tinker.loader.shareutil.ShareIntentUtil;
 import java.io.File;
 
 /**
+ * 真正的补丁合成全量dex的服务
+ * 它的manifest注册在com.tencent.tinker.lib包下的AndroidManifest里面
+ * 最后会和APP的AndroidManifest合成最终的AndroidManifest
  * Created by zhangshaowen on 16/3/14.
  */
 public class TinkerPatchService extends IntentService {
@@ -49,6 +52,16 @@ public class TinkerPatchService extends IntentService {
 
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
+     *
+     * Android中的Service是用于后台服务的，当应用程序被挂到后台的时候，
+     * 问了保证应用某些组件仍然可以工作而引入了Service这个概念，
+     * 那么这里面要强调的是Service不是独立的进程，也不是独立的线程，它
+     * 是依赖于应用程序的主线程的，也就是说，在更多时候不建议在Service中编写耗时的逻辑和操作，否则会引起ANR。
+
+     那么我们当我们编写的耗时逻辑，不得不被service来管理的时候，
+     就需要引入IntentService，IntentService是继承Service的，那么它包含了Service的全部特性，
+     当然也包含service的生命周期，那么与service不同的是，IntentService在执行onCreate操作的时候，
+     内部开了一个线程，去你执行你的耗时操作。
      */
     public TinkerPatchService() {
         super(TinkerPatchService.class.getSimpleName());
@@ -102,6 +115,7 @@ public class TinkerPatchService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         final Context context = getApplicationContext();
         Tinker tinker = Tinker.with(context);
+        //开始合成全量dex服务的监听回调
         tinker.getPatchReporter().onPatchServiceStart(intent);
 
         if (intent == null) {
@@ -119,13 +133,14 @@ public class TinkerPatchService extends IntentService {
         boolean result;
         long cost;
         Throwable e = null;
-
+        //增加服务优先级 避免被kill
         increasingPriority();
         PatchResult patchResult = new PatchResult();
         try {
             if (upgradePatchProcessor == null) {
                 throw new TinkerRuntimeException("upgradePatchProcessor is null.");
             }
+            //原来这里面才是真正的合成全量dex的功能函数
             result = upgradePatchProcessor.tryPatch(context, path, patchResult);
         } catch (Throwable throwable) {
             e = throwable;
@@ -141,11 +156,14 @@ public class TinkerPatchService extends IntentService {
         patchResult.rawPatchFilePath = path;
         patchResult.costTime = cost;
         patchResult.e = e;
-
+        //从合成全量dex完成后 启动通知合成结果的服务
         AbstractResultService.runResultService(context, patchResult, getPatchResultExtra(intent));
 
     }
 
+    /**
+     * 增加合成全量dex服务的优先级 避免被系统杀死
+     */
     private void increasingPriority() {
 //        if (Build.VERSION.SDK_INT > 24) {
 //            TinkerLog.i(TAG, "for Android 7.1, we just ignore increasingPriority job");

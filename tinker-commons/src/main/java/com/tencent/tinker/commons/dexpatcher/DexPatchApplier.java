@@ -108,6 +108,7 @@ public class DexPatchApplier {
     public void executeAndSaveTo(OutputStream out) throws IOException {
         // Before executing, we should check if this patch can be applied to
         // old dex we passed in.
+        // 首先old apk的签名和patchfile所携带的old apk签名是否一致，不一致则抛出异常
         byte[] oldDexSign = this.oldDex.computeSignature(false);
         if (oldDexSign == null) {
             throw new IOException("failed to compute old dex's signature.");
@@ -128,6 +129,7 @@ public class DexPatchApplier {
 
         // Firstly, set sections' offset after patched, sort according to their offset so that
         // the dex lib of aosp can calculate section size.
+        // patchedDex是最终合成的dex，首先设定各个区域的偏移量
         TableOfContents patchedToc = this.patchedDex.getTableOfContents();
 
         patchedToc.header.off = 0;
@@ -176,6 +178,7 @@ public class DexPatchApplier {
         patchedToc.computeSizesFromOffsets();
 
         // Secondly, run patch algorithms according to sections' dependencies.
+        // 对每个区域进行patch操作
         this.stringDataSectionPatchAlg = new StringDataSectionPatchAlgorithm(
                 patchFile, oldDex, patchedDex, oldToPatchedIndexMap
         );

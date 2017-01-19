@@ -87,7 +87,7 @@ public class UpgradePatch extends AbstractPatch {
             }
 
             if (!SharePatchFileUtil.checkIfMd5Valid(patchMd5)) {
-                TinkerLog.e(TAG, "UpgradePatch tryPatch:onPatchVersionCheckFail md5 %s is valid", patchMd5);
+                TinkerLog.e(TAG, "UpgradePatch tryPatch:onPatchVersionCheckFail md5 %s is invalid", patchMd5);
                 manager.getPatchReporter().onPatchVersionCheckFail(patchFile, oldInfo, patchMd5);
                 return false;
             }
@@ -111,12 +111,13 @@ public class UpgradePatch extends AbstractPatch {
         //don't delete dir for faster retry
 //        SharePatchFileUtil.deleteDir(patchVersionDirectory);
 
-        //copy file
+        //copy file /data/data/tinker.sample.android/tinker/patch-xxxxxxxx/patch-xxxxxxxx.apk
         File destPatchFile = new File(patchVersionDirectory + "/" + SharePatchFileUtil.getPatchVersionFile(patchMd5));
 
         try {
             // check md5 first
             if (!patchMd5.equals(SharePatchFileUtil.getMD5(destPatchFile))) {
+                //将外部的下发补丁包 copy进内部存储文件夹内
                 SharePatchFileUtil.copyFileUsingStream(patchFile, destPatchFile);
                 TinkerLog.w(TAG, "UpgradePatch copy patch file, src file: %s size: %d, dest file: %s size:%d", patchFile.getAbsolutePath(), patchFile.length(),
                     destPatchFile.getAbsolutePath(), destPatchFile.length());
@@ -128,6 +129,7 @@ public class UpgradePatch extends AbstractPatch {
             return false;
         }
 
+        //开始真正的合成全量dex
         //we use destPatchFile instead of patchFile, because patchFile may be deleted during the patch process
         if (!DexDiffPatchInternal.tryRecoverDexFiles(manager, signatureCheck, context, patchVersionDirectory, destPatchFile)) {
             TinkerLog.e(TAG, "UpgradePatch tryPatch:new patch recover, try patch dex failed");

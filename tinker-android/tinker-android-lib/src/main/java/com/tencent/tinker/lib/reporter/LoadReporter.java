@@ -21,6 +21,9 @@ import com.tencent.tinker.lib.service.TinkerPatchService;
 import java.io.File;
 
 /**
+ * 这个接口主要做的事情为监听补丁的加载情况 具体实现在DefaultLoadReporter类
+ * 即 打开APP后 开始  查找合成之后全量补丁包->检查补丁合法性->安装补丁到classloader的pathlist的dex前置->加载结束 的过程
+ * 此接口不负责监听下发补丁的全量dex合成过程
  * Created by zhangshaowen on 16/3/10.
  */
 public interface LoadReporter {

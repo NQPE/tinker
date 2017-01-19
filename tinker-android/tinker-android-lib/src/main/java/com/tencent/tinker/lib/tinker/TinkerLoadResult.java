@@ -68,6 +68,14 @@ public class TinkerLoadResult {
 
     public long costTime;
 
+    /**
+     * 解析intentResult
+     * 处理loadCode的各种情况
+     * 并且将各种情况发送给tinker.getLoadReporter()的监听接口
+     * @param context
+     * @param intentResult
+     * @return
+     */
     public boolean parseTinkerResult(Context context, Intent intentResult) {
         Tinker tinker = Tinker.with(context);
         loadCode = ShareIntentUtil.getIntentReturnCode(intentResult);

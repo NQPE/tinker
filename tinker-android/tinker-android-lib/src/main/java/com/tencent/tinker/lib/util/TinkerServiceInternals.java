@@ -122,9 +122,34 @@ public class TinkerServiceInternals extends ShareTinkerInternals {
         return process.equals(service);
     }
 
+    /**
+     * PackageItemInfo类
+     说明： AndroidManifest.xml文件中所有节点的基类，提供了这些节点的基本信息：a label、icon、 meta-data。它并不
+     直接使用，而是由子类继承然后调用相应方法。
+     常用字段：
+     public int icon           获得该资源图片在R文件中的值 (对应于android:icon属性)
+     public int labelRes     获得该label在R文件中的值(对应于android:label属性)
+     public String name   获得该节点的name值 (对应于android:name属性)
+     public String packagename   获得该应用程序的包名 (对应于android：packagename属性)
+     常用方法：
+     Drawable  loadIcon(PackageManager pm)               获得当前应用程序的图像
+     CharSequence  loadLabel(PackageManager pm)     获得当前应用程序的label
+
+     ActivityInfo类  继承自 PackageItemInfo
+     说明： 获得应用程序中<activity/>或者 <receiver />节点的信息 。我们可以通过它来获取我们设置的任何属性，包括
+     theme 、launchMode、launchmode等
+     常用方法继承至PackageItemInfo类中的loadIcon()和loadLabel()
+
+     ServiceInfo 类
+     说明： 同ActivityInfo类似 ，同样继承自 PackageItemInfo，只不过它表示的是<service>节点信息。
+     * @param context
+     * @param serviceClass
+     * @return
+     */
     private static String getServiceProcessName(Context context, Class<? extends Service> serviceClass) {
         PackageManager packageManager = context.getPackageManager();
 
+        //ComponentName（组件名称）是用来打开其他应用程序中的Activity或服务的
         ComponentName component = new ComponentName(context, serviceClass);
         ServiceInfo serviceInfo;
         try {
